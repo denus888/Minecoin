@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <style>
+        body { background: #000; color: #fff; text-align: center; font-family: sans-serif; padding-top: 50px; }
+        #coin { font-size: 100px; cursor: pointer; user-select: none; margin: 20px; }
+        .btn { background: #0088cc; color: #fff; border: none; padding: 15px; border-radius: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="ton-connect"></div>
+    <div style="font-size: 30px;">💰 <span id="bal">0</span></div>
+    <div id="coin" onclick="tap()">🪙</div>
+    <button class="btn" onclick="buy()">Буст x10 (5 TON)</button>
+
+    <script>
+        let score = Number(localStorage.getItem('s')) || 0;
+        let speed = Number(localStorage.getItem('m')) || 1;
+        document.getElementById('bal').innerText = score;
+
+        const tonConnectUI = new TONConnectUI.TonConnectUI({
+            manifestUrl: 'https://denus888.github.io/ton-miner/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect'
+        });
+
+        function tap() {
+            score += speed;
+            document.getElementById('bal').innerText = score;
+            localStorage.setItem('s', score);
+        }
+
+        async function buy() {
+            const tx = {
+                validUntil: Math.floor(Date.now()/1000) + 60,
+                messages: [{ 
+                    address: "UQDfIScKOZ4uOyayFZgYsRYX1iWUIQn7Yi0kbPirBoGsLIXW", 
+                    amount: "5000000000" 
+                }]
+            };
+            try {
+                await tonConnectUI.sendTransaction(tx);
+                speed = 10;
+                localStorage.setItem('m', 10);
+                alert("Успішно!");
+            } catch(e) { alert("Помилка"); }
+        }
+    </script>
+</body>
+</html>
