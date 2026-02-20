@@ -1,4 +1,5 @@
-const tonConnectUI = new TONConnectUI.TonConnectUI({
-    manifestUrl: 'https://denus888.github.io/Minecoin/tonconnect-manifest.json',
-    buttonRootId: 'ton-connect-btn'
-});
+{
+  "url": "https://denus888.github.io/Minecoin/",
+  "name": "Minecoin App",
+  "iconUrl": "https://raw.githubusercontent.com/ton-blockchain/world-assets/main/ton-blockchain-logo.png"
+}
