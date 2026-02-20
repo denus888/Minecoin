@@ -1,0 +1,2 @@
+# Minecoin
+Mine coin 
