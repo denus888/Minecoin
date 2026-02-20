@@ -1,106 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
-        body { 
-            background: #000; 
-            color: #fff; 
-            text-align: center; 
-            font-family: sans-serif; 
-            padding-top: 20px; 
-            margin: 0;
-        }
-        /* Центрування кнопки гаманця */
-        #ton-connect-button { 
-            display: flex; 
-            justify-content: center; 
-            margin-bottom: 30px; 
-        }
-        #coin { 
-            font-size: 120px; 
-            cursor: pointer; 
-            user-select: none; 
-            transition: transform 0.1s;
-        }
-        #coin:active { transform: scale(0.9); }
-        .btn-boost { 
-            background: #0088cc; 
-            color: white; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 12px; 
-            font-size: 18px; 
-            font-weight: bold; 
-            margin-top: 20px;
-            cursor: pointer;
-        }
-        .stats { font-size: 24px; margin: 10px 0; }
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; margin: 0; padding-bottom: 70px; }
+        #ton-connect-btn { display: flex; justify-content: center; padding: 20px; }
+        .tab-content { display: none; padding: 20px; }
+        .active { display: block; }
+        #coin { font-size: 100px; cursor: pointer; user-select: none; margin: 20px auto; width: 150px; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: #222; display: flex; justify-content: space-around; padding: 10px 0; }
+        .nav button { background: none; color: #fff; border: none; font-size: 16px; cursor: pointer; }
+        .btn-buy { background: #0088cc; color: #fff; border: none; padding: 15px; border-radius: 10px; width: 80%; margin: 10px; font-weight: bold; }
+        .stat-box { font-size: 20px; margin: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="ton-connect-button"></div>
+<div id="ton-connect-btn"></div>
 
-    <div class="stats">Баланс: <span id="bal">0</span> 🪙</div>
-    <div class="stats">Швидкість: x<span id="speed">1</span></div>
-
+<div id="game" class="tab-content active">
+    <div class="stat-box">Баланс: <span id="bal">0</span> 🪙</div>
+    <div class="stat-box">Швидкість: x<span id="speed">1</span> (авто)</div>
     <div id="coin" onclick="tap()">🪙</div>
+    <button class="btn-buy" onclick="buy(5, 10)">КУПИТИ БУСТ x10 (5 TON)</button>
+    <button class="btn-buy" onclick="buy(10, 25)">КУПИТИ БУСТ x25 (10 TON)</button>
+    <button class="btn-buy" onclick="buy(20, 60)">КУПИТИ БУСТ x60 (20 TON)</button>
+</div>
 
-    <button class="btn-boost" onclick="buyBoost()">КУПИТИ БУСТ x10 (5 TON)</button>
+<div id="friends" class="tab-content">
+    <h2>Твої друзі</h2>
+    <p>За кожного друга отримуй +0.1 до балансу!</p>
+    <button class="btn-buy" onclick="invite()">ЗАПРОСИТИ ДРУГА</button>
+</div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+<div id="withdraw" class="tab-content">
+    <h2>Вивід коштів</h2>
+    <p>Мінімальна сума: 1000 🪙</p>
+    <button class="btn-buy" style="background: #555;">ВИВЕСТИ (ЗАБЛОКОВАНО)</button>
+</div>
 
-        let score = Number(localStorage.getItem('s')) || 0;
-        let miningSpeed = Number(localStorage.getItem('m')) || 1;
+<nav class="nav">
+    <button onclick="showTab('game')">Гра</button>
+    <button onclick="showTab('friends')">Друзі</button>
+    <button onclick="showTab('withdraw')">Вивід</button>
+</nav>
 
-        document.getElementById('bal').innerText = score;
-        document.getElementById('speed').innerText = miningSpeed;
+<script>
+    const tg = window.Telegram.WebApp;
+    let score = Number(localStorage.getItem('s')) || 0;
+    let speed = Number(localStorage.getItem('m')) || 1;
 
-        // Ініціалізація TON Connect
-        const tonConnectUI = new TONConnectUI.TonConnectUI({
-            manifestUrl: 'https://denus888.github.io/Minecoin/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect-button'
-        });
+    // Ініціалізація гаманця
+    const tonConnectUI = new TONConnectUI.TonConnectUI({
+        manifestUrl: 'https://denus888.github.io/Minecoin/tonconnect-manifest.json',
+        buttonRootId: 'ton-connect-btn'
+    });
 
-        function tap() {
-            score += miningSpeed;
-            document.getElementById('bal').innerText = score;
-            localStorage.setItem('s', score);
-            tg.HapticFeedback.impactOccurred('medium');
+    // Оновлення екрану
+    function update() {
+        document.getElementById('bal').innerText = score.toFixed(2);
+        document.getElementById('speed').innerText = speed;
+        localStorage.setItem('s', score);
+        localStorage.setItem('m', speed);
+    }
+
+    // Автомайнінг (кожні 2 секунди)
+    setInterval(() => {
+        score += speed * 0.1;
+        update();
+    }, 2000);
+
+    function tap() {
+        score += speed;
+        update();
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+
+    function showTab(id) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function invite() {
+        tg.openTelegramLink("https://t.me/share/url?url=t.me/ТВІЙ_БОТ");
+        score += 0.1;
+        update();
+    }
+
+    async function buy(amount, newSpeed) {
+        if (!tonConnectUI.connected) {
+            tg.showAlert("НАТИСНИ 'Connect Wallet' ВГОРІ!");
+            return;
         }
+        const tx = {
+            validUntil: Math.floor(Date.now()/1000) + 60,
+            messages: [{ address: "ТВОЯ_АДРЕСА_TON", amount: (amount * 1000000000).toString() }]
+        };
+        try {
+            await tonConnectUI.sendTransaction(tx);
+            speed = newSpeed;
+            update();
+            tg.showAlert("Буст активовано!");
+        } catch(e) { tg.showAlert("Помилка оплати"); }
+    }
 
-        async function buyBoost() {
-            if (!tonConnectUI.connected) {
-                tg.showAlert("Спочатку підключи свій Tonkeeper кнопкою зверху!");
-                return;
-            }
-
-            const transaction = {
-                validUntil: Math.floor(Date.now() / 1000) + 300,
-                messages: [
-                    {
-                        address: "UQDfIScKOZ4uOyayFZgYsRYX1iWUIQn7Yi0kbPirBoGsLIXW"
-                        amount: "5000000000" // 5 TON у нанотонах
-                    }
-                ]
-            };
-
-            try {
-                await tonConnectUI.sendTransaction(transaction);
-                miningSpeed = 10;
-                document.getElementById('speed').innerText = miningSpeed;
-                localStorage.setItem('m', 10);
-                tg.showAlert("Оплата успішна! Тепер ти добуваєш х10!");
-            } catch (e) {
-                tg.showAlert("Помилка оплати або скасовано.");
-            }
-        }
-    </script>
+    update();
+</script>
 </body>
 </html>
