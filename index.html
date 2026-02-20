@@ -2,50 +2,104 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
-        body { background: #000; color: #fff; text-align: center; font-family: sans-serif; padding-top: 50px; }
-        #coin { font-size: 100px; cursor: pointer; user-select: none; margin: 20px; }
-        .btn { background: #0088cc; color: #fff; border: none; padding: 15px; border-radius: 10px; font-weight: bold; }
+        body { 
+            background: #000; 
+            color: #fff; 
+            text-align: center; 
+            font-family: sans-serif; 
+            padding-top: 20px; 
+            margin: 0;
+        }
+        /* Центрування кнопки гаманця */
+        #ton-connect-button { 
+            display: flex; 
+            justify-content: center; 
+            margin-bottom: 30px; 
+        }
+        #coin { 
+            font-size: 120px; 
+            cursor: pointer; 
+            user-select: none; 
+            transition: transform 0.1s;
+        }
+        #coin:active { transform: scale(0.9); }
+        .btn-boost { 
+            background: #0088cc; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 12px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        .stats { font-size: 24px; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <div id="ton-connect"></div>
-    <div style="font-size: 30px;">💰 <span id="bal">0</span></div>
+
+    <div id="ton-connect-button"></div>
+
+    <div class="stats">Баланс: <span id="bal">0</span> 🪙</div>
+    <div class="stats">Швидкість: x<span id="speed">1</span></div>
+
     <div id="coin" onclick="tap()">🪙</div>
-    <button class="btn" onclick="buy()">Буст x10 (5 TON)</button>
+
+    <button class="btn-boost" onclick="buyBoost()">КУПИТИ БУСТ x10 (5 TON)</button>
 
     <script>
-        let score = Number(localStorage.getItem('s')) || 0;
-        let speed = Number(localStorage.getItem('m')) || 1;
-        document.getElementById('bal').innerText = score;
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
+        let score = Number(localStorage.getItem('s')) || 0;
+        let miningSpeed = Number(localStorage.getItem('m')) || 1;
+
+        document.getElementById('bal').innerText = score;
+        document.getElementById('speed').innerText = miningSpeed;
+
+        // Ініціалізація TON Connect
         const tonConnectUI = new TONConnectUI.TonConnectUI({
-            manifestUrl: 'https://denus888.github.io/ton-miner/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect'
+            manifestUrl: 'https://denus888.github.io/Minecoin/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect-button'
         });
 
         function tap() {
-            score += speed;
+            score += miningSpeed;
             document.getElementById('bal').innerText = score;
             localStorage.setItem('s', score);
+            tg.HapticFeedback.impactOccurred('medium');
         }
 
-        async function buy() {
-            const tx = {
-                validUntil: Math.floor(Date.now()/1000) + 60,
-                messages: [{ 
-                    address: "UQDfIScKOZ4uOyayFZgYsRYX1iWUIQn7Yi0kbPirBoGsLIXW", 
-                    amount: "5000000000" 
-                }]
+        async function buyBoost() {
+            if (!tonConnectUI.connected) {
+                tg.showAlert("Спочатку підключи свій Tonkeeper кнопкою зверху!");
+                return;
+            }
+
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 300,
+                messages: [
+                    {
+                        address: "ТВОЯ_АДРЕСА_З_TONKEEPER", // ЗАМІНИ НА СВІЙ ГАМАНЕЦЬ!
+                        amount: "5000000000" // 5 TON у нанотонах
+                    }
+                ]
             };
+
             try {
-                await tonConnectUI.sendTransaction(tx);
-                speed = 10;
+                await tonConnectUI.sendTransaction(transaction);
+                miningSpeed = 10;
+                document.getElementById('speed').innerText = miningSpeed;
                 localStorage.setItem('m', 10);
-                alert("Успішно!");
-            } catch(e) { alert("Помилка"); }
+                tg.showAlert("Оплата успішна! Тепер ти добуваєш х10!");
+            } catch (e) {
+                tg.showAlert("Помилка оплати або скасовано.");
+            }
         }
     </script>
 </body>
